@@ -4,7 +4,10 @@ pipeline {
     maven 'maven'   // the tool you just set to 3.9.9
     jdk   'java'    // your configured JDK
   }
-  options { skipStagesAfterUnstable() }
+  environment {
+    MAVEN_OPTS = '-Dhttps.protocols=TLSv1.2 -Dmaven.wagon.http.retryHandler.count=3'
+  }
+          // options { skipStagesAfterUnstable() }
   stages {
     stage('Build') {
       steps {
