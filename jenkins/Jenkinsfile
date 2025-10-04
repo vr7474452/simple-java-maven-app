@@ -1,22 +1,30 @@
 pipeline {
   agent any
-  tools {
-    maven 'maven'   // the tool you just set to 3.9.9
-    jdk   'java'    // your configured JDK
-  }
+  tools { maven 'maven'; jdk 'java' }
   environment {
     MAVEN_OPTS = '-Dhttps.protocols=TLSv1.2 -Dmaven.wagon.http.retryHandler.count=3'
   }
-          // options { skipStagesAfterUnstable() }
   stages {
     stage('Build') {
       steps {
-        sh 'mvn -v' // should print 3.9.9
-        sh 'mvn -B -DskipTests clean package'
+        sh 'mvn -v'
+        writeFile file: 'settings.xml', text: '''
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0">
+  <mirrors>
+    <mirror>
+      <id>central</id>
+      <name>Maven Central mirror</name>
+      <url>https://repo1.maven.org/maven2</url>
+      <mirrorOf>central</mirrorOf>
+    </mirror>
+  </mirrors>
+</settings>
+'''
+        sh 'mvn -s settings.xml -B -DskipTests clean package'
       }
     }
     stage('Test') {
-      steps { sh 'mvn test' }
+      steps { sh 'mvn -s settings.xml test' }
       post { always { junit 'target/surefire-reports/*.xml' } }
     }
     stage('Deliver') {
